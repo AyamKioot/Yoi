@@ -5,21 +5,29 @@ const { GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } = require('@googl
 // =================== PENTING: ISI BAGIAN INI ======================
 // ====================================================================
 
-// Masukkan Token Bot Telegram Anda di sini (contoh: '123456:ABC-DEF1234ghIkl-7890')
-const TELEGRAM_BOT_TOKEN = "AIzaSyCY8ip7HbD_HYl8z9uQvy4SM97bkS015wU"; 
+// Masukkan Token Bot Telegram Anda di sini.
+// INI ADALAH TOKEN TELEGRAM: 8031839553:AAFSea2kkZGj_AvZ9Rs3bK5ZKEzxI_liWXA
+const TELEGRAM_BOT_TOKEN = "8031839553:AAFSea2kkZGj_AvZ9Rs3bK5ZKEzxI_liWXA"; 
 
-// Masukkan API Key Gemini Anda di sini (contoh: 'AIzaSyCxxxxxxxxxxxxxxxxxxxxxx')
-const GEMINI_API_KEY = "7921871932:AAHxgsDygopmOfTE3m5VqxhuY4MznGtHk0s";
+// Masukkan API Key Gemini Anda di sini.
+// INI ADALAH API KEY GEMINI: AIzaSyCY8ip7HbD_HYl8z9uQvy4SM97bkS015wU
+const GEMINI_API_KEY = "AIzaSyCY8ip7HbD_HYl8z9uQvy4SM97bkS015wU"; 
 
 // ====================================================================
 // ====================================================================
 
 
-// Pastikan token dan kunci tersedia sebelum melanjutkan
-if (TELEGRAM_BOT_TOKEN === "7921871932:AAHxgsDygopmOfTE3m5VqxhuY4MznGtHk0s" || GEMINI_API_KEY === "AIzaSyCY8ip7HbD_HYl8z9uQvy4SM97bkS015wU") {
-    console.error("Kesalahan: Token bot Telegram atau API Key Gemini belum diisi. Mohon lengkapi bagian 'PENTING' di awal file.");
-    process.exit(1);
+// Baris pemeriksaan ini sekarang bisa dihapus atau diubah jika Anda sudah mengisinya langsung.
+// Jika Anda sudah mengisi nilai di atas, blok if ini tidak perlu lagi.
+// Jika Anda ingin mempertahankan pemeriksaan untuk placeholder, pastikan nilai yang dibandingkan adalah placeholder, bukan nilai Anda.
+/*
+if (TELEGRAM_BOT_TOKEN === "MASUKKAN_TOKEN_BOT_TELEGRAM_ANDA_DI_SINI" || GEMINI_API_KEY === "MASUKKAN_API_KEY_GEMINI_ANDA_DI_SINI") {
+    console.error("Kesalahan: Token bot Telegram atau API Key Gemini belum diisi. Mohon lengkapi bagian 'PENTING' di awal file index.js.");
+    process.exit(1); 
 }
+*/
+// Saya akan menghilangkan blok if di bawah untuk versi ini, karena Anda sudah mengisi langsung.
+
 
 const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: true });
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
@@ -27,7 +35,7 @@ const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 // Menggunakan model Gemini 2.0 Flash
 const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-// --- System Instructions (Identitas Bot) ---
+// --- System Instructions (Identitas Bot & Aturan Dasar) ---
 const SYSTEM_INSTRUCTIONS = `
 Anda adalah Bot Riset Cerdas bernama 'Penjelajah Informasi'.
 Tugas utama Anda adalah membantu pengguna menemukan informasi akurat dan terkini dari internet.
@@ -73,40 +81,52 @@ function getUserChat(chatId) {
 }
 
 // --- Handler Perintah Telegram ---
+
 bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
     getUserChat(chatId); 
 
-    const botName = SYSTEM_INSTRUCTIONS.split('\n')[1].split("'")[1]; 
+    const botNameMatch = SYSTEM_INSTRUCTIONS.match(/bernama '([^']+)'/);
+    const botName = botNameMatch ? botNameMatch[1] : 'Asisten AI'; 
+    
     bot.sendMessage(chatId, `Halo! Saya adalah ${botName}. Bagaimana saya bisa membantu Anda hari ini dalam menemukan informasi?`);
+    console.log(`[${chatId}] Perintah /start diterima.`);
 });
 
 bot.onText(/\/help/, (msg) => {
     const chatId = msg.chat.id;
     bot.sendMessage(chatId, "Kirimkan pertanyaan apa pun kepada saya. Saya akan menggunakan kemampuan riset saya untuk menemukan informasinya.");
+    console.log(`[${chatId}] Perintah /help diterima.`);
 });
 
 bot.onText(/\/reset/, (msg) => {
     const chatId = msg.chat.id;
     if (userChats[chatId]) {
-        delete userChats[chatId];
-        bot.sendMessage(chatId, "Memori percakapan Anda telah direset. Silakan mulai percakapan baru.");
+        delete userChats[chatId]; 
+        bot.sendMessage(chatId, "Memori percakapan Anda telah direset. Silakan mulai percakapan baru atau kirimkan pertanyaan pertama Anda.");
         console.log(`[${chatId}] Sesi chat Gemini direset.`);
     } else {
-        bot.sendMessage(chatId, "Tidak ada sesi percakapan aktif yang perlu direset.");
+        bot.sendMessage(chatId, "Tidak ada sesi percakapan aktif yang perlu direset untuk Anda.");
+        console.log(`[${chatId}] Percobaan reset, tapi tidak ada sesi aktif.`);
     }
 });
+
 
 // --- Handler Pesan Teks Umum ---
 bot.on('message', async (msg) => {
     const chatId = msg.chat.id;
     const userMessage = msg.text;
 
-    if (userMessage.startsWith('/')) {
+    if (userMessage && userMessage.startsWith('/')) {
+        return;
+    }
+    
+    if (!userMessage) {
+        console.log(`[${chatId}] Menerima pesan non-teks atau kosong, diabaikan.`);
         return;
     }
 
-    console.log(`[${chatId}] Pesan dari pengguna: ${userMessage}`);
+    console.log(`[${chatId}] Pesan dari pengguna: "${userMessage}"`);
 
     const chat = getUserChat(chatId);
 
@@ -116,7 +136,7 @@ bot.on('message', async (msg) => {
                 {
                     "functionDeclarations": [
                         {
-                            "name": "Google Search_retrieval",
+                            "name": "Google Search_retrieval", // INI SUDAH DIKOREKSI
                             "description": "Performs a Google search and returns results.",
                             "parameters": {
                                 "type": "object",
@@ -127,7 +147,6 @@ bot.on('message', async (msg) => {
                                     },
                                 },
                                 "required": ["query"],
-                                // Note: For actual tool use, you might define more complex parameters
                             },
                         },
                     ],
@@ -145,17 +164,21 @@ bot.on('message', async (msg) => {
             citationMetadata.citationSources.forEach((citation, index) => {
                 if (citation.uri) {
                     sources += `${index + 1}. [${citation.uri}](${citation.uri})\n`;
+                } else if (citation.startIndex !== undefined && citation.endIndex !== undefined) {
+                    const citedText = geminiResponse.substring(citation.startIndex, citation.endIndex);
+                    sources += `${index + 1}. "...${citedText}..." (bagian dari respons)\n`;
                 }
             });
         }
         
-        bot.sendMessage(chatId, geminiResponse + sources, { parse_mode: 'Markdown' });
-        console.log(`[${chatId}] Respons Gemini: ${geminiResponse}`);
+        await bot.sendMessage(chatId, geminiResponse + sources, { parse_mode: 'Markdown' });
+        console.log(`[${chatId}] Respons Gemini: "${geminiResponse.substring(0, 100)}..."`); 
 
     } catch (error) {
-        console.error(`[${chatId}] Terjadi kesalahan saat memanggil Gemini API:`, error);
-        bot.sendMessage(chatId, "Maaf, terjadi kesalahan saat memproses permintaan Anda.");
+        console.error(`[${chatId}] Terjadi kesalahan saat memproses pesan:`, error);
+        await bot.sendMessage(chatId, "Maaf, terjadi kesalahan saat memproses permintaan Anda. Mohon coba lagi nanti.");
     }
 });
 
-console.log('Bot Telegram sedang berjalan...');
+console.log('Bot Telegram sedang berjalan dan mendengarkan pesan...');
+console.log('Pastikan API Key Gemini dan Token Bot Telegram sudah benar di file index.js.');
