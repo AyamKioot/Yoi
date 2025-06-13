@@ -16,7 +16,7 @@ const GEMINI_API_KEY = "7921871932:AAHxgsDygopmOfTE3m5VqxhuY4MznGtHk0s";
 
 
 // Pastikan token dan kunci tersedia sebelum melanjutkan
-if (TELEGRAM_BOT_TOKEN === "MASUKKAN_TOKEN_BOT_TELEGRAM_ANDA_DI_SINI" || GEMINI_API_KEY === "MASUKKAN_API_KEY_GEMINI_ANDA_DI_SINI") {
+if (TELEGRAM_BOT_TOKEN === "7921871932:AAHxgsDygopmOfTE3m5VqxhuY4MznGtHk0s" || GEMINI_API_KEY === "AIzaSyCY8ip7HbD_HYl8z9uQvy4SM97bkS015wU") {
     console.error("Kesalahan: Token bot Telegram atau API Key Gemini belum diisi. Mohon lengkapi bagian 'PENTING' di awal file.");
     process.exit(1);
 }
